@@ -15,7 +15,8 @@ module Compiler.AST
   
   -- * Constructors
   , bindsExpr, bindsCExpr
-  -- * Destructiors
+  
+  -- * Destructors
   , exprBinds
   , bindId
   , isPublicParam

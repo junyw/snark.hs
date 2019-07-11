@@ -49,7 +49,7 @@ getSourceName (File f) = f
 -- | Run Protocol from Circuit
 --------------------------------------------------------------------------------
 qapInst :: Circuit -> QAP Fr
-qapInst = r1cs_to_qap . circuit_to_r1cs 
+qapInst = r1csToQAP . circuitToR1CS 
 
 runKeyGen :: (MonadRandom m) => Circuit -> m (ProvingKey, VerificationKey)
 runKeyGen circuit = do 

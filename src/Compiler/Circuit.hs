@@ -7,7 +7,7 @@ module Compiler.Circuit
   , toName
   , negateWires
   , negateWire
-  , circuit_to_r1cs
+  , circuitToR1CS
   , qapWitness
   , Pretty(..)
   , setCircuitValue
@@ -26,39 +26,32 @@ import Data.Text.Prettyprint.Doc
 -- | Circuit
 --------------------------------------------------------------------------------
 
-data ICircuit a = Circuit {  cPublicParams  :: ![IWire a] 
-                           , cPrivateParams :: ![IWire a] 
-                           , cGates   :: ![IGate a]
-                           , cWires   :: ![IWire a]
+data ICircuit a = Circuit { cPublicParams  :: ![IWire a] 
+                          , cPrivateParams :: ![IWire a] 
+                          , cGates         :: ![IGate a]
+                          , cWires         :: ![IWire a]
                           }
   deriving (Show, Functor)
 
 -- | Operation, left wires, right wires, output wire
-data IGate a = CGate CPrim2 [IWire a] [IWire a] (IWire a)-- gate that represent some computation
-           | CNormalize [IWire a] (IWire a) (IWire a) -- with an auxiliary variable that normalize another variable to one
-           | CAssert CPrim2 [IWire a] [IWire a] (IWire a)  -- gate that represent some constraint, where the output is a fixed constant
+data IGate a = CGate      CPrim2    [IWire a] [IWire a] (IWire a)  -- gate that represents some computation
+             | CAssert    CPrim2    [IWire a] [IWire a] (IWire a)  -- gate that represents some constraint, where the output is a fixed constant
+             | CNormalize [IWire a] (IWire a) (IWire a)            -- gate with an auxiliary wire that normalizes input to one
+  
   deriving (Show, Functor)
 
 -- | CPrim2 are bianry gate operations
--- CNotZero: Y = (X != 0) ? 1 : 0
--- CNotZero(X, M) = 1 if x != 0
--- CNotZero(X, M) = 0 if x == 0  
--- CEqual: X == Y -> 1 else 0 
--- CEqual(X, Y) = NOT(CNotZero(X-Y, M))
--- NAND(X, Y) = 1 - XY
--- NOT(X, X) = 1 - XX
-
-data CPrim2 = CTimes | CDivide  -- | CEqual | CNOT | CLess | CGreater 
+data CPrim2 = CTimes | CDivide  
   deriving (Show)
 
 data IWire a = CWire a Integer 
              | CInt Integer
   deriving (Show, Functor)
 
-type Id = String 
+type Id      = String 
 type Circuit = ICircuit Id
-type CWire = IWire Id
-type CGate = IGate Id 
+type CWire   = IWire Id
+type CGate   = IGate Id 
 
 ---------------------------------------------------------------------------
 
@@ -79,8 +72,8 @@ negateWire (CInt  n)   = (CInt (-n))
 -- INPUTS: a circuit 
 -- OUTPUT: a rank-1 constraint system 
 -- -}
-circuit_to_r1cs :: Circuit -> R1CS
-circuit_to_r1cs 
+circuitToR1CS :: Circuit -> R1CS
+circuitToR1CS 
   Circuit{cPublicParams, cPrivateParams, cGates, cWires} = r1cs
   where
     empty_constraint :: CMap
@@ -88,7 +81,7 @@ circuit_to_r1cs
     a = empty_constraint
     b = empty_constraint
     c = empty_constraint
-    (_ ,(a', b', c')) = foldl (\(i,abc) gate -> (i+1, gate_to_constraint i abc gate))  
+    (_ ,(a', b', c')) = foldl (\(i,abc) gate -> (i+1, gateToConstraint i abc gate))  
                       (1, (a, b, c)) cGates
     r1cs :: R1CS
     r1cs = R1CS { r1csA  = a'
@@ -98,30 +91,30 @@ circuit_to_r1cs
                 , r1csN  = toInteger $ length cPublicParams
                 }
 
-gate_to_constraint :: Integer -> (CMap, CMap, CMap) -> CGate -> (CMap, CMap, CMap)
-gate_to_constraint i (a, b, c) (CGate CTimes left right out) = (a', b', c')
+gateToConstraint :: Integer -> (CMap, CMap, CMap) -> CGate -> (CMap, CMap, CMap)
+gateToConstraint i (a, b, c) (CGate CTimes left right out) = (a', b', c')
   where
-    a' = R1CS.insertAll (wire_to_constraint i <$> left) a
-    b' = R1CS.insertAll (wire_to_constraint i <$> right) b
-    c' = R1CS.insertAll (wire_to_constraint i <$> [out]) c
+    a' = R1CS.insertAll (wireToConstraint i <$> left)  a
+    b' = R1CS.insertAll (wireToConstraint i <$> right) b
+    c' = R1CS.insertAll (wireToConstraint i <$> [out]) c
     -- takes a gate number and a wire, returns a constraint
-    wire_to_constraint :: Integer -> CWire -> (String, (Integer, Integer))
-    wire_to_constraint n (CWire x i) = (x, (n, i))
-    wire_to_constraint n (CInt i)    = ("&1", (n, i))
+    wireToConstraint :: Integer -> CWire -> (String, (Integer, Integer))
+    wireToConstraint n (CWire x i) = (x, (n, i))
+    wireToConstraint n (CInt i)    = ("&1", (n, i))
 
-gate_to_constraint i (a, b, c) (CGate CDivide left right out) = (a', b', c')
+gateToConstraint i (a, b, c) (CGate CDivide left right out) = (a', b', c')
   where -- l/r = o -> r * o = l
-    a' = R1CS.insertAll (wire_to_constraint i <$> right) a
-    b' = R1CS.insertAll (wire_to_constraint i <$> [out]) b
-    c' = R1CS.insertAll (wire_to_constraint i <$> left) c
-    wire_to_constraint :: Integer -> CWire -> (String, (Integer, Integer))
-    wire_to_constraint n (CWire x i) = (x, (n, i))
+    a' = R1CS.insertAll (wireToConstraint i <$> right) a
+    b' = R1CS.insertAll (wireToConstraint i <$> [out]) b
+    c' = R1CS.insertAll (wireToConstraint i <$> left) c
+    wireToConstraint :: Integer -> CWire -> (String, (Integer, Integer))
+    wireToConstraint n (CWire x i) = (x, (n, i))
 
-gate_to_constraint i (a, b, c) (CNormalize left right out) = 
-  gate_to_constraint i (a, b, c) (CGate CTimes left [right] out)
+gateToConstraint i (a, b, c) (CNormalize left right out) = 
+  gateToConstraint i (a, b, c) (CGate CTimes left [right] out)
 
-gate_to_constraint i (a, b, c) (CAssert op left right out) = 
-  gate_to_constraint i (a, b, c) (CGate op left right out)
+gateToConstraint i (a, b, c) (CAssert op left right out) = 
+  gateToConstraint i (a, b, c) (CGate op left right out)
 
 --------------------------------------------------------------------------------
 -- | Circuit to QAP-Witness
@@ -135,41 +128,40 @@ type Env a  = Map.Map String a
 
 qapWitness :: Circuit -> Env Fr -> Env Fr -> Env Fr
 qapWitness Circuit { cPublicParams, cPrivateParams, cGates, cWires } 
-  publicInputs privateInputs = foldl gate_to_witness env' cGates
+  publicInputs privateInputs = foldl gateToWitness env' cGates
     where
-      -- env = Map.union publicInputs privateInputs
       env = Map.fromList $ (\(CWire x _) -> (x, 0)) <$> cWires
       env' = Map.union (Map.union publicInputs privateInputs) env
 
 
-gate_to_witness :: Env Fr -> CGate -> Env Fr
-gate_to_witness env (CGate CTimes left right out) = env'
+gateToWitness :: Env Fr -> CGate -> Env Fr
+gateToWitness env (CGate CTimes left right out) = env'
   where
-    left_val = compute_wires env left
-    right_val = compute_wires env right 
-    out_val = left_val * right_val
+    left_val  = computeWires env left
+    right_val = computeWires env right 
+    out_val   = left_val * right_val
     env' = Map.insert (toName out) out_val env
 
-gate_to_witness env (CGate CDivide left right out) = env'
+gateToWitness env (CGate CDivide left right out) = env'
   where
-    left_val = compute_wires env left
-    right_val = compute_wires env right 
-    out_val = left_val / right_val
+    left_val  = computeWires env left
+    right_val = computeWires env right 
+    out_val   = left_val / right_val
     env' = Map.insert (toName out) out_val env
 
-gate_to_witness env (CNormalize left right out) = env''
+gateToWitness env (CNormalize left right out) = env''
   where
-    left_val = compute_wires env left
-    m = if left_val == 0 then 0 else 1/left_val
-    out_val = if left_val == 0 then 0  else 1
-    env' = Map.insert (toName right) m env
+    left_val = computeWires env left
+    m        = if left_val == 0 then 0 else 1/left_val
+    out_val  = if left_val == 0 then 0  else 1
+    env'  = Map.insert (toName right) m env
     env'' = Map.insert (toName out) out_val env'
 
-gate_to_witness env (CAssert _ _ _ _) = env -- do nothing
+gateToWitness env (CAssert _ _ _ _) = env -- do nothing
 
 
-compute_wires :: Env Fr -> [CWire] -> Fr
-compute_wires env wires = foldl (\acc wire -> acc + (compute_wire env wire)) 0 wires
+computeWires :: Env Fr -> [CWire] -> Fr
+computeWires env wires = foldl (\acc wire -> acc + (compute_wire env wire)) 0 wires
 
 compute_wire :: Env Fr -> CWire -> Fr
 compute_wire env (CInt n) = fromInteger n

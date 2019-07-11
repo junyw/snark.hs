@@ -21,7 +21,7 @@ type CMap = Map.Map String [(Integer, Integer)]
 data R1CS = R1CS { r1csA  :: !CMap
                  , r1csB  :: !CMap
                  , r1csC  :: !CMap
-                 , degree :: Integer -- number of Public Inputs + number of gates + number of outputs(0) + 1
+                 , degree :: Integer -- number of public inputs + number of gates + number of outputs(0) + 1
                  , r1csN  :: Integer -- number of public inputs
                  } 
   deriving (Show)

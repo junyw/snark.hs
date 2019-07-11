@@ -1,7 +1,7 @@
 module Compiler.QAP
   ( 
     QAP(..)
-  , r1cs_to_qap
+  , r1csToQAP
   , qapSat
   ) where
 
@@ -23,14 +23,14 @@ Given a program with
   numberOfWires         = a
   numberOfGates         = b
 
-'r1cs_to_qap' converts the program to a QAP with
+'r1csToQAP' converts the program to a QAP with
   size of the QAP     m = a
   degree of Z         d = n + b + l + 1
-  qapA, qapB, qapC   :  groups of m + 1 polynomials, each with degree <= d - 1
+  qapA, qapB, qapC     :  groups of m + 1 polynomials, each with degree <= d - 1
   qapA                 :  [(&1, A0), (&var_1, A1), ...,(&var_n, An), (var_n+1, An+1),..., (var_m ,Am)]
   qapB                 :  [(&1, B0), (&var_1, B1), ...,(&var_n, Bn), (var_n+1, Bn+1),..., (var_m ,Bm)]
   qapC                 :  [(&1, C0), (&var_1, C1), ...,(&var_n, Cn), (var_n+1, Cn+1),..., (var_m ,Cm)]
-    where &1 is a special input, &var_1 to &var_n are n public inputs, &var_n+1 to &var_m are m - n verifier inputs
+    where &1 is a special input, &var_1 to &var_n are n public inputs, var_n+1 to var_m are m - n verifier inputs
   qapZ                 : a polynomial of degree d
 -}
 
@@ -44,8 +44,8 @@ data QAP a = QAP { sizeOfPublicInputs :: Integer
   deriving (Show)
 
 
-r1cs_to_qap :: R1CS -> QAP Fr
-r1cs_to_qap  
+r1csToQAP :: R1CS -> QAP Fr
+r1csToQAP  
   R1CS{ r1csA, r1csB, r1csC, degree, r1csN } = 
   QAP { sizeOfPublicInputs = r1csN
       , degreeOfZ = degree

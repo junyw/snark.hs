@@ -22,7 +22,6 @@ module Protocol
 import Field.Fr 
 import Curve.Curve
 import Curve.Pairing
-import qualified Params
 
 import Util.Polynomial 
 import Compiler.R1CS 
