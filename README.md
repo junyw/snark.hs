@@ -1,6 +1,9 @@
 # snark.hs
 
+[![CircleCI](https://circleci.com/gh/junyw/snark.hs.svg?style=svg)](https://circleci.com/gh/junyw/snark.hs)
+
 An experimental DSL for creating zero knowledge proofs (zk-SNARK) using Pinocchio [[PGHR13]](https://eprint.iacr.org/2013/279) protocol.
+
 
 ## Usage
 
