@@ -1,0 +1,4 @@
+def main(public z, private x, private y):
+  if x: 
+    y == z 
+  else: y == z * 10

@@ -1,0 +1,2 @@
+def main(public input):
+  10 == input

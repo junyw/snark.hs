@@ -1,0 +1,64 @@
+name:                snark
+version:             0.0.1.0
+github:              "junyw/snark.hs"
+license:             BSD3
+author:              "Junyi Wang"
+copyright:           "2019 Junyi Wang"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/githubuser/snark#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- megaparsec
+- parser-combinators
+- prettyprinter
+- cryptonite
+- containers
+
+library:
+  source-dirs: src
+
+default-extensions:
+- FlexibleInstances
+- NamedFieldPuns
+- BangPatterns
+- RecordWildCards
+- DeriveFunctor
+- RankNTypes
+- ScopedTypeVariables
+
+executables:
+  snark-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - snark
+
+tests:
+  snark-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - snark
+    - tasty
+    - tasty-hunit
+    - tasty-quickcheck

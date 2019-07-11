@@ -1,0 +1,104 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: fd241601af2a8a8e3c9b8109c8e65def79da182d4eab1c0c8394d6041a94a3d8
+
+name:           snark
+version:        0.0.1.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/snark#readme>
+homepage:       https://github.com/junyw/snark.hs#readme
+bug-reports:    https://github.com/junyw/snark.hs/issues
+author:         Junyi Wang
+maintainer:     Junyi Wang
+copyright:      2019 Junyi Wang
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/junyw/snark.hs
+
+library
+  exposed-modules:
+      Compiler.AST
+      Compiler.Circuit
+      Compiler.Compiler
+      Compiler.Parser
+      Compiler.QAP
+      Compiler.R1CS
+      Curve.Curve
+      Curve.Pairing
+      Field.Fp
+      Field.Fp12
+      Field.Fp2
+      Field.Fp6
+      Field.Fr
+      Lib
+      Params
+      Protocol
+      Runner
+      Util.Polynomial
+  other-modules:
+      Paths_snark
+  hs-source-dirs:
+      src
+  default-extensions: FlexibleInstances NamedFieldPuns BangPatterns RecordWildCards DeriveFunctor RankNTypes ScopedTypeVariables
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , cryptonite
+    , megaparsec
+    , parser-combinators
+    , prettyprinter
+  default-language: Haskell2010
+
+executable snark-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_snark
+  hs-source-dirs:
+      app
+  default-extensions: FlexibleInstances NamedFieldPuns BangPatterns RecordWildCards DeriveFunctor RankNTypes ScopedTypeVariables
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , cryptonite
+    , megaparsec
+    , parser-combinators
+    , prettyprinter
+    , snark
+  default-language: Haskell2010
+
+test-suite snark-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      TestCompiler
+      TestCurve
+      TestField
+      TestUtil
+      Paths_snark
+  hs-source-dirs:
+      test
+  default-extensions: FlexibleInstances NamedFieldPuns BangPatterns RecordWildCards DeriveFunctor RankNTypes ScopedTypeVariables
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , containers
+    , cryptonite
+    , megaparsec
+    , parser-combinators
+    , prettyprinter
+    , snark
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+  default-language: Haskell2010

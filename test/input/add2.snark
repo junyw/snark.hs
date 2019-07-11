@@ -1,0 +1,2 @@
+def main(public input, private expected):
+  expected + 2 == input - 1

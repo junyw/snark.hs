@@ -1,0 +1,3 @@
+def main(public input, private expected):
+  let tmp = input + 200 in
+    expected == tmp 

@@ -1,0 +1,2 @@
+def main(public y, private x): 
+  y == x * x * x + x + 5

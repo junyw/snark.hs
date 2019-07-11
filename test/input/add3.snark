@@ -1,0 +1,2 @@
+def main(public sum, private a, private b, private c, private d, private e):
+  sum == a + b + c + d + e
