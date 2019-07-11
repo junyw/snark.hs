@@ -41,3 +41,16 @@ main = do
 
   pure ()
 ```
+
+## Implementation
+
+- [x] Parser
+- [ ] Type checking
+- [x] Circuit generation
+- [x] Circuit to R1CS
+- [x] R1CS to QAP
+- [x] Witness computation
+- [x] PGHR protocol
+- [x] BN128 curve operations
+- [ ] Support for loops, comparisons, functions
+
