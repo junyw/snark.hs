@@ -61,67 +61,65 @@ testCompiler :: Bool -> (String, FilePath, [Fr], [Fr]) -> TestTree
 testCompiler testAll (name, f, public, private) = 
   testCaseSteps name $ \step -> do 
     let in_file  = "test/input/" ++ f ++ ".snark"
-    let out_file = "test/output/" ++ f ++ ".log"
-    withFile out_file WriteMode (\handle -> do
+    (_, handle) <- openTempFile "test/output/" (f ++ ".log")
 
-      hPutStrLn handle ("public inputs: " ++ (show public))
-      hPutStrLn handle ("private inputs: " ++ (show private))
+    hPutStrLn handle ("public inputs: " ++ (show public))
+    hPutStrLn handle ("private inputs: " ++ (show private))
 
-      src <- readFile in_file
-      sep handle "Source"   
-      hPutStrLn handle src
+    src <- readFile in_file
+    sep handle "Source"   
+    hPutStrLn handle src
 
-      step "Generate Circuit"
-      
-      let ast = parse f src
-      sep handle "AST"   
-      hPutStrLn handle (show . pretty $ ast)
+    step "Generate Circuit"
+    
+    let ast = parse f src
+    sep handle "AST"   
+    hPutStrLn handle (show . pretty $ ast)
 
-      let tagged = tag ast
-      sep handle "TAG"
-      hPutStrLn handle (show  $ tagged)
+    let tagged = tag ast
+    sep handle "TAG"
+    hPutStrLn handle (show  $ tagged)
 
-      let anf = atag. anormal . rename $ tagged
-      sep handle "ANF"
-      hPutStrLn handle (show . pretty $ anf)
+    let anf = atag. anormal . rename $ tagged
+    sep handle "ANF"
+    hPutStrLn handle (show . pretty $ anf)
 
-      let circuit = genCircuit anf
-      sep handle "Circuit"
-      hPutStrLn handle $ show . pretty $ circuit
+    let circuit = genCircuit anf
+    sep handle "Circuit"
+    hPutStrLn handle $ show . pretty $ circuit
 
+    step "Compute QAPWitness"
+    let public_params  = Map.fromList $ (\(x, y) -> (toName x, y)) <$> (zip (cPublicParams circuit) public)
+    let private_params = Map.fromList $ (\(x, y) -> (toName x, y)) <$> (zip (cPrivateParams circuit) private)
+    let qap_wit = qapWitness circuit public_params private_params 
+    sep handle "QAPWitness"
+    hPutStrLn handle $ show qap_wit
 
-      step "Compute QAPWitness"
-      let public_params  = Map.fromList $ (\(x, y) -> (toName x, y)) <$> (zip (cPublicParams circuit) public)
-      let private_params = Map.fromList $ (\(x, y) -> (toName x, y)) <$> (zip (cPrivateParams circuit) private)
-      let qap_wit = qapWitness circuit public_params private_params 
-      sep handle "QAPWitness"
-      hPutStrLn handle $ show qap_wit
+    hPutStrLn handle $ show . pretty $ setCircuitValue qap_wit circuit
 
-      hPutStrLn handle $ show . pretty $ setCircuitValue qap_wit circuit
+    step "Convert to QAP"
+    let qap = qapInst circuit
+    let sat = qapSat qap qap_wit
+    sep handle "QAP is satisified by QAP-Witness"
+    hPutStrLn handle $ show sat
 
-      step "Convert to QAP"
-      let qap = qapInst circuit
-      let sat = qapSat qap qap_wit
-      sep handle "QAP is satisified by QAP-Witness"
-      hPutStrLn handle $ show sat
+    if testAll 
+      then do 
+        step "Run Setup"
+        (pk, vk) <- runKeyGenFromQAP qap 
 
-      if testAll 
-        then do 
-          step "Run Setup"
-          (pk, vk) <- runKeyGenFromQAP qap 
+        step "Run Prover"
+        proof <- runProverFromQAP qap pk qap_wit
 
-          step "Run Prover"
-          proof <- runProverFromQAP qap pk qap_wit
+        step "Run Verifier"
+        let decision = verifier vk proof public_params 
+        sep handle "Proof is Accepted"
+        hPutStrLn handle $ show decision
 
-          step "Run Verifier"
-          let decision = verifier vk proof public_params 
-          sep handle "Proof is Accepted"
-          hPutStrLn handle $ show decision
+        assertBool "Proof is Accepted" decision
 
-          assertBool "Proof is Accepted" decision
-
-        else do 
-          assertBool "QAPWitness is Correct" sat)
+      else do 
+        assertBool "QAPWitness is Correct" sat
   where 
     sep :: Handle -> String -> IO ()
     sep handle label= do 
